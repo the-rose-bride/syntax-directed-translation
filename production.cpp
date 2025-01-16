@@ -6,6 +6,8 @@
 #include "token.h"
 #include "helper.h"
 
+static bool debug = false;
+
 Production::Production(std::string name)
 {
   m_name = name;
@@ -15,20 +17,22 @@ void Production::addToken(Token *token) { definition.push_back(token); }
 
 void Production::print()
 {
-  std::cout << m_name << ": ";
+  //std::cout << m_name << ": ";
   
   for (auto &t : definition)
   {
-    t->print();
-    std::cout << " ";
+    std::cout << t->name() << " ";
   }
 }
 
 bool Production::match(const char *str, int &incr, int depth)
 {
-  indent_n(depth);
-  print();
-  std::cout << " match " << std::endl;
+  if (debug)
+  {
+    indent_n(depth);
+    print();
+    std::cout << " match " << std::endl;
+  }
   
   // Iterate over tokens and match on each one
   int sub_incr = 0;

@@ -11,10 +11,13 @@ class Token
 {
 protected:
   std::string m_definition;
+  
 public:
   Token(std::string definition);
+
+  std::string name();
   
-  void print();
+  virtual void print() = 0;
   virtual bool match(const char *str, int &incr, int depth) = 0;
   
   friend std::ostream& operator<<(std::ostream& stream, const Token &token);
@@ -26,7 +29,8 @@ class Terminal : public Token
 {
 public:
   Terminal(std::string definition);
-  
+
+  void print();
   bool match(const char *str, int &incr, int depth);
 };
 
@@ -40,6 +44,7 @@ public:
   
   void addProduction(Production *production);
   void printProductions();
+  void print();
   bool match(const char *str, int &incr, int depth);
     
   friend NonTerminal& operator<<(NonTerminal &nt, Production &p);

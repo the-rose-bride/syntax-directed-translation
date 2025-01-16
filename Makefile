@@ -1,7 +1,7 @@
 .PHONY: all clean
 
 all:
-	g++ *.cpp -o run
+	g++ -g *.cpp -o run
 
 clean:
 	rm -f run

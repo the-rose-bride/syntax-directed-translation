@@ -6,26 +6,11 @@
 
 #include "token.h"
 #include "production.h"
-
-// "a c b b c a c"
-//
-// S -> a S b S | b S a S | c
-void parseSource(Token *token, const char *source)
-{
-  std::cout << "parseSource" << std::endl;
-
-  // Find a token
-  const char *s = "a c b c";
-  
-  int incr = 0;
-  int depth = 0;
-  
-  token->match(s, incr, depth); // will need to pass a tree in
-}
+#include "grammar.h"
 
 int main(int argc, char **argv)
 {
-  printf("Hello, SDT\n");
+  printf("Hello, SYNTAX DIRECTED TRANSLATOR\n\n");
 
   // Represent a language definition - productions, terminals, nonterminals
   Terminal a("a");
@@ -45,9 +30,20 @@ int main(int argc, char **argv)
 
   S << P1 << P2 << P3;
   
+  NonTerminal triplet_token("triplet_token");
+  Production P_triplet_token("P_triplet_token");
+  P_triplet_token << a << b << c;
+  triplet_token << P_triplet_token;
 
-  S.printProductions();
-  std::cout << "print prod fin" << std::endl << std::endl;;
+  NonTerminal triplet("triplet");
+  Production P_triplet("P_triplet");
+  P_triplet << triplet_token << triplet_token << triplet_token;
+  triplet << P_triplet;
+
+  Grammar g;
+  g << S << triplet << triplet_token;
+  
+  g.print();
   
   // Read in a language definition
   // S>
@@ -58,9 +54,10 @@ int main(int argc, char **argv)
 
   // Read in some 'source code'
   const char *source = "a c b b c a c";
+  if (argc > 1) source = argv[1];
   
   // Parse and represent the syntax tree
-  parseSource(&S, source);
+  g.parseSource(source);
   
   return 0;
 }

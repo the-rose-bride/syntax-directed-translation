@@ -8,9 +8,11 @@
 #include "production.h"
 #include "helper.h"
 
+static bool debug = false;
+
 Token::Token(std::string definition) : m_definition(definition) {}
 
-void Token::print() { std::cout << m_definition; }
+std::string Token::name() { return m_definition; }
 
 std::ostream& operator<<(std::ostream& stream, const Token &token)
 {
@@ -21,16 +23,23 @@ std::ostream& operator<<(std::ostream& stream, const Token &token)
 // Terminals
 Terminal::Terminal(std::string definition) : Token(definition) {}
 
+void Terminal::print()
+{
+  std::cout << name();
+}
+
 bool Terminal::match(const char *str, int &incr, int depth)
 {
-  indent_n(depth);
-  
-  std::cout << "Terminal " << m_definition
-            << " match on " << str << std::endl;
+  if (debug)
+  {
+    indent_n(depth);
+    std::cout << "Terminal " << m_definition
+              << " match on " << str << std::endl;
+  }
 
   bool match = (0 == strncmp(str, m_definition.c_str(), m_definition.size()));
 
-  if (match) incr++; // inrement by length
+  if (match) incr++; // increment by length
   
   return match;
 }
@@ -46,20 +55,28 @@ void NonTerminal::addProduction(Production *production)
 void NonTerminal::printProductions()
 {
   // print each production on a new line
-  std::for_each(productions.begin(), productions.end(),
-                [this](Production *p) {
-                  print();
-                  std::cout << " -> ";
-                  p->print();
-                  std::cout << std::endl;
-                });
+  for (auto &p : productions)
+  {
+    std::cout << name() << " -> ";
+    p->print();
+    std::cout << std::endl;
+  };
+}
+
+void NonTerminal::print()
+{
+  std::cout << name() << std::endl;
+  printProductions();
 }
 
 bool NonTerminal::match(const char *str, int &incr, int depth)
 {
-  indent_n(depth);
-  std::cout << "Nonterminal " << m_definition
-            << " match on " << str << std::endl;
+  if (debug)
+  {
+    indent_n(depth);
+    std::cout << "Nonterminal " << m_definition
+              << " match on " << str << std::endl;
+  }
 
   // Skip any whitespace before checking against productions
   while (isspace(*str))
@@ -75,8 +92,11 @@ bool NonTerminal::match(const char *str, int &incr, int depth)
     
     if (p->match(str, prod_incr, depth + 1))
     {
-      indent_n(depth);
-      std::cout << "We matched a production!" << std::endl << std::endl;
+      if (debug)
+      {
+        indent_n(depth + 1);
+        std::cout << "We matched a production!" << std::endl << std::endl;
+      }
       
       incr += prod_incr;
       return true;
