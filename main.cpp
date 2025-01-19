@@ -31,9 +31,17 @@ int main(int argc, char **argv)
   S << P1 << P2 << P3;
   
   NonTerminal triplet_token("triplet_token");
-  Production P_triplet_token("P_triplet_token");
-  P_triplet_token << a << b << c;
-  triplet_token << P_triplet_token;
+  
+  Production P_triplet_token_A("P_triplet_token_A");
+  P_triplet_token_A << a;
+  Production P_triplet_token_B("P_triplet_token_B");
+  P_triplet_token_B << b;
+  Production P_triplet_token_C("P_triplet_token_C");
+  P_triplet_token_C << c;
+
+  triplet_token << P_triplet_token_A
+		<< P_triplet_token_B
+		<< P_triplet_token_C;
 
   NonTerminal triplet("triplet");
   Production P_triplet("P_triplet");
@@ -42,7 +50,6 @@ int main(int argc, char **argv)
 
   Grammar g;
   g << S << triplet << triplet_token;
-  
   g.print();
   
   // Read in a language definition
@@ -58,6 +65,9 @@ int main(int argc, char **argv)
   
   // Parse and represent the syntax tree
   g.parseSource(source);
+
+  // print tree here
+  
   
   return 0;
 }

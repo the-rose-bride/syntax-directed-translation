@@ -1,5 +1,7 @@
 #include "grammar.h"
 
+#include "ast.h"
+
 #include <iostream>
 
 void Grammar::addToken(Token *t)
@@ -15,6 +17,7 @@ void Grammar::parseSource(const char *source)
 
   // Find a token
   const char *s = source;
+  std::vector<TokenTreeNode*> children;
 
   while (*s)
   {
@@ -22,10 +25,12 @@ void Grammar::parseSource(const char *source)
     int depth = 0;
 
     bool match_any = false;
+
+    TokenTreeNode *match = NULL;
     
     for (auto &t : definition)
     {
-      bool did_match = t->match(s, incr, depth); // will need to pass a tree in
+      bool did_match = t->match(s, incr, depth, match);
 
       if (did_match)
       {
@@ -45,9 +50,18 @@ void Grammar::parseSource(const char *source)
       std::cout << "Syntax error - grammar did not match any tokens" << std::endl;
       exit(-1);
     }
+
+    children.push_back(match);
   }
 
-  std::cout << "loop end" << std::endl;
+  std::cout << "parse loop end" << std::endl;
+
+  // TODO: Move this logic
+  for (auto &c : children)
+  {
+    std::cout << "print a child" << std::endl;
+    printTokenTree(*c);
+  }
 }
 
 void Grammar::print()

@@ -7,8 +7,9 @@
 
 #include "production.h"
 #include "helper.h"
+#include "ast.h"
 
-static bool debug = false;
+static bool debug = true;
 
 Token::Token(std::string definition) : m_definition(definition) {}
 
@@ -28,7 +29,10 @@ void Terminal::print()
   std::cout << name();
 }
 
-bool Terminal::match(const char *str, int &incr, int depth)
+bool Terminal::match(const char *str,
+		     int &incr,
+		     int depth,
+		     TokenTreeNode *&match_tree)
 {
   if (debug)
   {
@@ -39,7 +43,14 @@ bool Terminal::match(const char *str, int &incr, int depth)
 
   bool match = (0 == strncmp(str, m_definition.c_str(), m_definition.size()));
 
-  if (match) incr++; // increment by length
+  if (match)
+  {
+    incr++; // increment by length
+    match_tree = new TokenTreeNode(this);
+
+    // std::cout << "print terminal tree: ";
+    // printTokenTree(*match_tree);
+  }
   
   return match;
 }
@@ -69,7 +80,10 @@ void NonTerminal::print()
   printProductions();
 }
 
-bool NonTerminal::match(const char *str, int &incr, int depth)
+bool NonTerminal::match(const char *str,
+			int &incr,
+			int depth,
+			TokenTreeNode *&match_tree)
 {
   if (debug)
   {
@@ -89,8 +103,11 @@ bool NonTerminal::match(const char *str, int &incr, int depth)
   for (auto& p : productions)
   {
     int prod_incr = 0;
-    
-    if (p->match(str, prod_incr, depth + 1))
+
+    if (p->match(str,
+		 prod_incr,
+		 depth + 1, 
+		 match_tree))
     {
       if (debug)
       {
@@ -99,6 +116,13 @@ bool NonTerminal::match(const char *str, int &incr, int depth)
       }
       
       incr += prod_incr;
+
+      printTokenTree(*match_tree);
+
+      // NOTE: 
+      // match tree already represents this nonterminal token,
+      // and the matching children
+      
       return true;
     }
   }
@@ -111,5 +135,6 @@ bool NonTerminal::match(const char *str, int &incr, int depth)
 NonTerminal& operator<<(NonTerminal &nt, Production &p)
 {
   nt.addProduction(&p);
+  p.setParent(&nt);
   return nt;
 }

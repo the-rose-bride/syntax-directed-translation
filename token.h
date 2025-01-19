@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+class TokenTreeNode;
+
 class Production;
 
 // Parent class
@@ -18,7 +20,10 @@ public:
   std::string name();
   
   virtual void print() = 0;
-  virtual bool match(const char *str, int &incr, int depth) = 0;
+  virtual bool match(const char *str,
+		     int &incr,
+		     int depth,
+		     TokenTreeNode *&match_tree) = 0;
   
   friend std::ostream& operator<<(std::ostream& stream, const Token &token);
   
@@ -31,7 +36,10 @@ public:
   Terminal(std::string definition);
 
   void print();
-  bool match(const char *str, int &incr, int depth);
+  bool match(const char *str,
+	     int &incr,
+	     int depth,
+	     TokenTreeNode *&match_tree);
 };
 
 class NonTerminal : public Token
@@ -45,7 +53,10 @@ public:
   void addProduction(Production *production);
   void printProductions();
   void print();
-  bool match(const char *str, int &incr, int depth);
+  bool match(const char *str,
+	     int &incr,
+	     int depth,
+	     TokenTreeNode *&match_tree);
     
   friend NonTerminal& operator<<(NonTerminal &nt, Production &p);
 };

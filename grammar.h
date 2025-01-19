@@ -9,6 +9,7 @@ class Grammar
 {
 private:
   std::vector<Token*> definition;
+  
 public:
   void addToken(Token *t);
   void parseSource(const char *source);
