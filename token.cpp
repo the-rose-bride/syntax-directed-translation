@@ -29,7 +29,8 @@ void Terminal::print()
   std::cout << name();
 }
 
-bool Terminal::match(const char *str,
+bool Terminal::match(std::string *token_stream,
+		     int num_tokens,
 		     int &incr,
 		     int depth,
 		     TokenTreeNode *&match_tree)
@@ -38,18 +39,15 @@ bool Terminal::match(const char *str,
   {
     indent_n(depth);
     std::cout << "Terminal " << m_definition
-              << " match on " << str << std::endl;
+              << " match on " << token_stream[0] << std::endl;
   }
 
-  bool match = (0 == strncmp(str, m_definition.c_str(), m_definition.size()));
+  bool match = (token_stream[0] == m_definition);
 
   if (match)
   {
-    incr++; // increment by length
+    incr++;
     match_tree = new TokenTreeNode(this);
-
-    // std::cout << "print terminal tree: ";
-    // printTokenTree(*match_tree);
   }
   
   return match;
@@ -80,7 +78,8 @@ void NonTerminal::print()
   printProductions();
 }
 
-bool NonTerminal::match(const char *str,
+bool NonTerminal::match(std::string *token_stream,
+			int num_tokens,
 			int &incr,
 			int depth,
 			TokenTreeNode *&match_tree)
@@ -89,22 +88,18 @@ bool NonTerminal::match(const char *str,
   {
     indent_n(depth);
     std::cout << "Nonterminal " << m_definition
-              << " match on " << str << std::endl;
-  }
-
-  // Skip any whitespace before checking against productions
-  while (isspace(*str))
-  {
-    ++str;
-    ++incr;
+              << " match on " << token_stream[0] << std::endl;
   }
   
   // Iterate over productions and match on them
   for (auto& p : productions)
   {
+    if (p->numTokens() > num_tokens) continue;
+    
     int prod_incr = 0;
 
-    if (p->match(str,
+    if (p->match(&token_stream[0],
+		 num_tokens,
 		 prod_incr,
 		 depth + 1, 
 		 match_tree))

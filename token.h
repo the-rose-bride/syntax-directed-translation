@@ -20,10 +20,11 @@ public:
   std::string name();
   
   virtual void print() = 0;
-  virtual bool match(const char *str,
+  virtual bool match(std::string *token_stream,
+		     int num_tokens,
 		     int &incr,
 		     int depth,
-		     TokenTreeNode *&match_tree) = 0;
+		     TokenTreeNode* &match_tree) = 0;
   
   friend std::ostream& operator<<(std::ostream& stream, const Token &token);
   
@@ -36,7 +37,8 @@ public:
   Terminal(std::string definition);
 
   void print();
-  bool match(const char *str,
+  bool match(std::string *token_stream,
+	     int num_tokens,
 	     int &incr,
 	     int depth,
 	     TokenTreeNode *&match_tree);
@@ -53,7 +55,8 @@ public:
   void addProduction(Production *production);
   void printProductions();
   void print();
-  bool match(const char *str,
+  bool match(std::string *token_stream,
+	     int num_tokens,
 	     int &incr,
 	     int depth,
 	     TokenTreeNode *&match_tree);

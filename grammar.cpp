@@ -9,19 +9,19 @@ void Grammar::addToken(Token *t)
   definition.push_back(t);
 }
 
-void Grammar::parseSource(const char *source)
+void Grammar::parseSource(input_stream source)
 {
   std::cout << "parseSource" << std::endl;
 
-  std::cout << source << std::endl;
+  for (auto &s : source) std::cout << s << " ";
+  std::cout << std::endl;
 
   // Find a token
-  const char *s = source;
   std::vector<TokenTreeNode*> children;
+  int incr = 0; // input-token offset
 
-  while (*s)
+  while (incr < (source.size() - 1))
   {
-    int incr = 0;
     int depth = 0;
 
     bool match_any = false;
@@ -30,18 +30,20 @@ void Grammar::parseSource(const char *source)
     
     for (auto &t : definition)
     {
-      bool did_match = t->match(s, incr, depth, match);
+      // Skip any definitions that are too long
+      bool did_match = t->match(&source[incr],
+				source.size() - incr,
+				incr,
+				depth,
+				match);
 
       if (did_match)
       {
         std::cout << "Matched token \"" << t->name();
-        std::cout << "\" (chars=" << incr << ")" << std::endl;
-
-        printf("%.*s\n", incr, s);
+        std::cout << "\" (toks=" << incr << ")" << std::endl;
         
         match_any = true;
-        s += incr;
-        while (isspace(*s)) ++s;
+	break;
       }
     }
 

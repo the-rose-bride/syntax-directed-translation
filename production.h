@@ -20,8 +20,10 @@ public:
   Production(std::string name);
   void setParent(NonTerminal *parent);
   void addToken(Token *token);
+  int numTokens();
   void print();
-  bool match(const char *str,
+  bool match(std::string *token_stream,
+	     int num_tokens,
 	     int &incr,
 	     int depth,
 	     TokenTreeNode* &match_tree);

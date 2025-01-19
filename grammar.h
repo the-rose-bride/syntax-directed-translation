@@ -5,6 +5,8 @@
 
 #include "token.h"
 
+typedef std::vector<std::string> input_stream;
+
 class Grammar
 {
 private:
@@ -12,7 +14,7 @@ private:
   
 public:
   void addToken(Token *t);
-  void parseSource(const char *source);
+  void parseSource(input_stream source);
   void print();
   
   friend Grammar& operator<<(Grammar &g, Token &t);

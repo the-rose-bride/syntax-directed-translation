@@ -1,4 +1,6 @@
 #include <cstdio>
+#include <cstring>
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -7,6 +9,26 @@
 #include "token.h"
 #include "production.h"
 #include "grammar.h"
+
+input_stream tokenise_input(const char *source_text)
+{
+  input_stream is;
+
+  char *copy = strdup(source_text);
+  
+  const char *delim = " ";
+  char *tok = strtok(copy, delim);
+
+  while (tok)
+  {
+    std::cout << tok << std::endl;
+    is.push_back(tok);
+
+    tok = strtok(NULL, delim);
+  }
+  
+  return is;
+}
 
 int main(int argc, char **argv)
 {
@@ -62,9 +84,13 @@ int main(int argc, char **argv)
   // Read in some 'source code'
   const char *source = "a c b b c a c";
   if (argc > 1) source = argv[1];
+
+  // Tokenise input
+  std::vector<std::string> input = tokenise_input(source);
+
   
   // Parse and represent the syntax tree
-  g.parseSource(source);
+  g.parseSource(input);
 
   // print tree here
   

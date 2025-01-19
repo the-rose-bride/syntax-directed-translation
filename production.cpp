@@ -20,6 +20,11 @@ void Production::setParent(NonTerminal *parent)
 
 void Production::addToken(Token *token) { definition.push_back(token); }
 
+int Production::numTokens()
+{
+  return definition.size();
+}  
+
 void Production::print()
 {
   //std::cout << m_name << ": ";
@@ -30,7 +35,8 @@ void Production::print()
   }
 }
 
-bool Production::match(const char *str,
+bool Production::match(std::string *token_stream,
+		       int num_tokens,                       
 		       int &incr,
 		       int depth,
 		       TokenTreeNode* &match_tree)
@@ -41,6 +47,8 @@ bool Production::match(const char *str,
     print();
     std::cout << " match " << std::endl;
   }
+
+  if (num_tokens < definition.size()) return false;
   
   // Iterate over tokens and match on each one
   int sub_incr = 0;
@@ -48,20 +56,16 @@ bool Production::match(const char *str,
   
   for (auto& t : definition)
   {
-    // TODO: tokenise your input, you animal
-    while (isspace(*(str + sub_incr))) ++sub_incr;
-
     TokenTreeNode *sub_match_tree = NULL;
     
-    if (!t->match(str + sub_incr,
+    if (!t->match(&token_stream[sub_incr],
+		  num_tokens - sub_incr,
                   sub_incr,
                   depth + 1,
                   sub_match_tree))
     {
       return false;
     }
-
-    // printTokenTree(*sub_match_tree);
     
     children.push_back(sub_match_tree);
   }
