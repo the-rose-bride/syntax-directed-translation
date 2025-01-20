@@ -29,7 +29,6 @@ void printTokenTree(TokenTreeNode &node)
   for (auto &c : node.children)
   {
     printTokenTree(*c);
-    //std::cout << (*c->token) << std::endl;
   }
 
   depth--;

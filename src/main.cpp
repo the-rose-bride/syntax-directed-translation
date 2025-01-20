@@ -43,8 +43,10 @@ int main(int argc, char **argv)
   if (argc > 1) source = argv[1];
 
   // Tokenise input
+  std::cout << "Tokenising input.." << std::endl;
   std::vector<std::string> input = tokenise_input(source);
 
+  return 0;
   
   // Parse and represent the syntax tree
   g.parseSource(input);

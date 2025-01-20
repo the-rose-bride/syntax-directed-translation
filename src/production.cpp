@@ -27,8 +27,6 @@ int Production::numTokens()
 
 void Production::print()
 {
-  //std::cout << m_name << ": ";
-  
   for (auto &t : definition)
   {
     std::cout << t->name() << " ";
