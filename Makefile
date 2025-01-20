@@ -1,8 +1,9 @@
 .PHONY: all clean
 
 all:
-	g++ -g *.cpp -o run
+	mkdir -p ./bin
+	g++ -g ./src/*.cpp -o ./bin/run
 
 clean:
-	rm -f run
-	rm -f *~
+	rm -f ./bin/run
+	find -name "*~" -exec rm {} \;
