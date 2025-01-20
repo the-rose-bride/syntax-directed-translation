@@ -1,0 +1,6 @@
+a:"a"
+b:"b"
+c:"c"
+S:<a><S><b><S>
+triplet_token:<a>|<b>|<c>
+triplet:<triplet_token><triplet_token><triplet_token>

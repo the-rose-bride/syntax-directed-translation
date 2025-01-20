@@ -12,8 +12,14 @@ class Grammar
 private:
   std::vector<Token*> definition;
   
+  void process_rule(const char *rule_name, char *production);
+  void process_line(char *c_str);
+  bool load_file(const char *definition_filename);
+  
 public:
+  Grammar(const char *definition_filename);
   void addToken(Token *t);
+  Token* findToken(const char* token_name);
   void parseSource(input_stream source);
   void print();
   
