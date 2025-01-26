@@ -12,102 +12,78 @@
 
 static int debug = true;
 
-// given a token name, add a new token to the grammar
-void Grammar::process_token(const char *token_name)
-{
-  // just add a token to the list
-  if (debug)
-  {
-    printf("Terminal token: %s\n", token_name);
-  }
-      
-  Token *new_token = new Terminal(token_name);
-  (*this) << (*new_token);
-      
-  return;
-}
-
-// given a string representation of a production rule, parse and either
+// given a string representation of a production rule,  and either
 // add to an existing nonterminal, or create a new nonterminal and add
 // to the grammar
 // part 1 parses the string into a vector of token names
 // part 2 processes the tokens into nonterminal and productions
-void Grammar::process_rule(const char *rule_name, NonTerminal *nonterminal, char *production)
+TokenDefList Grammar::parse_rule(const char *rule_name,
+				 char *production)
 {
-  // Decode non-terminal production
-  // <a><b> etc
-  char *token = strtok(production, ">");
-  std::vector<const char*> rule_tokens;
+  #define PARSE_RULE_INDENT "    "
+  #define PARSE_TOKEN_INDENT "      "
+  TokenDefList rule_tokens;
+  if (!production || ! rule_name) return rule_tokens;
   
+  char *scan = production;
+
   do
   {
-    if (*token == '<') token++;
+    // Extract the next token from the rule string
+    while (*scan != '<' && *scan != '"') ++scan;
     
-    // print the production definition token
-    char *token_name = strdup(token);
-
-    if (debug)
+    char start_token = *scan;
+    scan++; // now points at start of wrapped token
+    bool nonterminal = (start_token == '<');
+    char end_token = (nonterminal ? '>' : '"');
+    char *scan_end = strchr(scan, end_token);
+    
+    if (!scan_end)
     {
-      printf("Production rule token: %s\n", token_name);
+      return rule_tokens; // invalid
     }
+    
+    const char *token_str = strndup(scan, (scan_end - scan));
 
-    rule_tokens.push_back(token_name);
-  } while ((token = strtok(NULL, ">")));
+    // Push this token to the list of rule tokens
+    printf(PARSE_TOKEN_INDENT "parse token %s \"%s\"\n",
+	   (nonterminal ? "non-terminal" : "terminal"),
+	   token_str);
 
-  // Use the rule_tokens to generate a non-terminal and add it to the grammar
-  // TODO: Seems inefficient, maybe refactor classes?
-  Production *new_production = new Production(rule_name);
-  
-  for (auto &str : rule_tokens)
+    rule_tokens.push_back(TokenParseDef{token_str, nonterminal});
+    
+    scan = scan_end + 1;
+  } while (*scan);
+
+  // Debug printing post-processing of - a rule
+  printf(PARSE_RULE_INDENT "parse_rule, printing output:\n");
+  for (auto &rt : rule_tokens)
   {
-    // Need to look up an existing token in the grammar
-    // Check if this is the rule name, we will use a placeholder..
-    if (0 == strcmp(str, rule_name))
-    {
-      (*new_production) << (*nonterminal);
-    }
-    else
-    {
-      std::string token_string = std::string(str);
-      Token* t = findToken(token_string);
-      if (t) (*new_production) << (*t);
-    }
+    printf(PARSE_RULE_INDENT "rule token: %s %d\n", rt.name, rt.nonterminal);
   }
-  
-  // Create a new rule with the children and the token name
-  (*nonterminal) << (*new_production);
+
+  return rule_tokens;
 }
 
 // process a line from the language definition file
 // will have a lhs (of ":") naming the token and a rhs
 // that is either a terminal "name" or a list of productions
 // separated by "|" characters.
-void Grammar::process_line(char *c_str)
+LineParseDef Grammar::parse_line(char *c_str)
 {
+  #define PARSE_LINE_INDENT "  "
+  LineParseDef prod_def;
+  std::vector<TokenDefList> &rule_defs = prod_def.rule_list;
+  
   char *lhs = strtok(c_str, ":");
+  prod_def.name = lhs;
   char *rhs = strtok(NULL, ":");
-  if (!rhs) return; // bad line
+  if (!rhs) return prod_def; // bad line
 
   if (debug)
   {
-    std::cout << "  Token name: " << lhs
-	      << ", definition: " << rhs << std::endl;
-  }
-
-  // First check we are not a new terminal token definition
-  const char *open_quote = strchr(rhs, '"');
-  if (open_quote)
-  {
-    const char *close_quote = strchr(open_quote + 1, '"');
-    if (!close_quote)
-    {
-      printf("missing close quote from line rhs\n");
-      return;
-    }
-    open_quote++;
-    const char *token = strndup(open_quote, (close_quote - open_quote));
-    process_token(token);
-    return;
+    std::cout << PARSE_LINE_INDENT "parse name: " << lhs
+	      << ", and def: " << rhs << std::endl;
   }
 
   // Otherwise process production rules
@@ -118,20 +94,120 @@ void Grammar::process_line(char *c_str)
   {
     if (debug)
     {
-      std::cout << "    got production: " << production_string << std::endl;
+      std::cout << PARSE_RULE_INDENT "parse rule: "
+		<< production_string << std::endl;
     }
 
-    rule_strings.push_back(production_string);
+    rule_strings.push_back(strdup(production_string));
   } while ((production_string = strtok(NULL, "|")));
 
-  // process rule calls strtok, we can't call until strtok is finished above
-  NonTerminal *new_nonterminal = new NonTerminal(lhs);
-  addToken(new_nonterminal);
-  
   for (auto &s : rule_strings)
   {
-    process_rule(lhs, new_nonterminal, s);
+    TokenDefList ret = parse_rule(lhs, s);
+    printf(PARSE_LINE_INDENT "printing output of parse_rule from parse_line:\n");
+
+    for (auto &r : ret)
+    {
+      printf(PARSE_LINE_INDENT "rt: %s, %d\n", r.name, r.nonterminal);
+    }
+    printf("\n");
+    
+    rule_defs.push_back(ret);
   }
+
+  printf(PARSE_LINE_INDENT "printing rule_defs output from parse_line:\n");
+  for (TokenDefList &rd : rule_defs)
+  {
+    printf(PARSE_LINE_INDENT "rd -\n");
+    for (TokenParseDef &tpd : rd)
+    {
+      printf(PARSE_LINE_INDENT "tpd: %s, %d\n", tpd.name, tpd.nonterminal);
+    }
+  }
+
+  // printf(PARSE_LINE_INDENT "parse_line returning prod_def %p with rule_def %p size %zu\n",
+  // 	 &prod_def,
+  // 	 &(prod_def.rule_list),
+  // 	 prod_def.rule_list.size());
+  
+  return prod_def;
+}
+
+void Grammar::process_production_definition(LineParseDef def)
+{
+  const char *prod_name = def.name;
+  std::vector<TokenDefList> list_of_rules = def.rule_list;
+
+  printf("**** Processing the production definition for %s\n", prod_name);
+  
+  // new terminal tokens have one rule, with a single terminal token
+  if (list_of_rules.size() == 1
+      && list_of_rules[0].size() == 1
+      && list_of_rules[0][0].nonterminal == false)
+  {
+    printf("This is a new terminal token\n");
+    // add a terminal
+    Terminal *new_terminal = new Terminal(list_of_rules[0][0].name);
+    addToken(new_terminal);
+    return;
+  }
+
+  // otherwise this is a nonterminal token
+  printf("This is a new NON-terminal token\n");
+  
+  // Use the rule_tokens to generate a non-terminal and add it to the grammar
+  NonTerminal *new_nonterminal = new NonTerminal(prod_name);
+  addToken(new_nonterminal);
+  printf("Nonterminal %s created %p\n", prod_name, new_nonterminal);
+
+  for (TokenDefList &rule : list_of_rules)
+  {
+    Production *new_production = new Production(prod_name);
+
+    printf("New production for %s\n", prod_name);
+  
+    for (TokenParseDef tok : rule)
+    {
+      const char *add_token = tok.name;
+      bool add_nonterminal = tok.nonterminal;
+
+      Token* t = NULL;
+
+      if (!add_nonterminal)
+      {
+	printf("Adding terminal token %s\n", add_token);
+	t = new Terminal(add_token); // duplicates okay for now
+      }
+      else
+      {
+	printf("Adding non-terminal token %s\n", add_token);
+	
+	t = findToken(add_token);
+	if (t)
+	{
+	  printf("non-terminal token %s exists: %p\n", add_token, t);
+	}
+	else
+	{
+	  t = new NonTerminal(add_token);
+	  printf("new non-terminal token %s created: %p\n", add_token, t);
+	}
+      }
+
+      new_production->addToken(t);
+      new_production->print();
+      printf("\n");
+    }
+
+    // Does order matter? Wouldn't if we were using pointers...
+    new_nonterminal->addProduction(new_production);
+  }
+
+  printf(">>>>Printing grammar defintion partway\n");
+  print();
+  printf("<<<<");
+
+  printf("****\n\n");
 }
 
 bool Grammar::load_file(const char *definition_filename)
@@ -157,9 +233,26 @@ bool Grammar::load_file(const char *definition_filename)
   {
     std::cout << "Line: " << line << std::endl;
 
-    // Tokenise on ":" for token name and then "|" for definition tokens
     char *c_str = strdup(line.c_str());
-    process_line(c_str);
+    LineParseDef prod_def = parse_line(c_str);
+
+    // printf("parse_line returning prod_def %p with rule_def %p size %zu\n",
+    // 	   &prod_def,
+    // 	   &(prod_def.rule_list),
+    // 	   prod_def.rule_list.size());
+    
+    printf("printing prod_def rule_defs output from load_file:\n");
+    
+    for (TokenDefList &rd : prod_def.rule_list)
+    {
+      printf( "rd -\n");
+      for (TokenParseDef &tpd : rd)
+      {
+	printf( "tpd: %s, %d\n", tpd.name, tpd.nonterminal);
+      }
+    }
+    
+    process_production_definition(prod_def);
   }
 
   in.close();
@@ -177,7 +270,7 @@ Grammar::Grammar(const char *definition_filename)
 
 void Grammar::addToken(Token *t) { definition.push_back(t); }
 
-Token* Grammar::findToken(std::string &token_name)
+Token* Grammar::findToken(const char *token_name)
 {
   const auto it =
     std::find_if(definition.begin(), definition.end(),

@@ -18,7 +18,15 @@ void Production::setParent(NonTerminal *parent)
   this->parent = parent;
 }
 
-void Production::addToken(Token *token) { definition.push_back(token); }
+void Production::addToken(Token *token)
+{
+  if (!token)
+  {
+    printf("PRODUCTION ATTEMPT TO ADD NULL TOKEN\n");
+    return;
+  }
+  definition.push_back(token);
+}
 
 int Production::numTokens()
 {

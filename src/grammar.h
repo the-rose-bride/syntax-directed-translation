@@ -7,22 +7,35 @@
 
 typedef std::vector<std::string> input_stream;
 
+struct TokenParseDef
+{
+  const char *name;
+  bool nonterminal;
+};
+
+typedef std::vector<TokenParseDef> TokenDefList;
+
+struct LineParseDef
+{
+  const char *name;
+  std::vector<TokenDefList> rule_list;
+};
+
 class Grammar
 {
 private:
   std::vector<Token*> definition;
 
-  void process_token(const char *token_name);
-  void process_rule(const char *rule_name,
-		    NonTerminal *nonterminal,
-		    char *production);
-  void process_line(char *c_str);
+  TokenDefList parse_rule(const char *rule_name,
+			  char *production);
+  LineParseDef parse_line(char *c_str);
+  void process_production_definition(LineParseDef prod_def);
   bool load_file(const char *definition_filename);
   
 public:
   Grammar(const char *definition_filename);
   void addToken(Token *t);
-  Token* findToken(std::string &token_name);
+  Token* findToken(const char *token_name);
   void parseSource(input_stream source);
   void print();
   
