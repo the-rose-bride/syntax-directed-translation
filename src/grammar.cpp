@@ -44,6 +44,21 @@ TokenDefList Grammar::parse_rule(const char *rule_name,
     }
     
     const char *token_str = strndup(scan, (scan_end - scan));
+    scan = scan_end + 1;
+    
+    // Handle empty string tokens
+    if (0 == strlen(token_str))
+    {
+      if (nonterminal)
+      {
+	printf(PARSE_TOKEN_INDENT "zero length nonterminal not allowed!\n");
+	continue;
+      }
+      else
+      {
+	printf(PARSE_TOKEN_INDENT "adding empty-string token\n");
+      }
+    }
 
     // Push this token to the list of rule tokens
     printf(PARSE_TOKEN_INDENT "parse token %s \"%s\"\n",
@@ -51,8 +66,6 @@ TokenDefList Grammar::parse_rule(const char *rule_name,
 	   token_str);
 
     rule_tokens.push_back(TokenParseDef{token_str, nonterminal});
-    
-    scan = scan_end + 1;
   } while (*scan);
 
   // Debug printing post-processing of - a rule
@@ -163,6 +176,7 @@ void Grammar::process_production_definition(LineParseDef def)
   for (TokenDefList &rule : list_of_rules)
   {
     Production *new_production = new Production(prod_name);
+    new_production->setParent(new_nonterminal);
 
     printf("New production for %s\n", prod_name);
   
@@ -305,14 +319,22 @@ void Grammar::parseSource(input_stream source)
     
     for (auto &t : definition)
     {
-      // Skip any definitions that are too long
+      int original_incr = incr;
       bool did_match = t->match(&source[incr],
 				source.size() - incr,
 				incr,
 				depth,
 				match);
+      int incr_diff = incr - original_incr;
 
-      if (did_match)
+      // Ignore a top-level match on an empty-string token
+      // that would cause an infinite loop
+      if (incr_diff == 0)
+      {
+	std::cout << "Matched on empty token, keep searching." << std::endl;
+	did_match = false;
+      }
+      else if (did_match)
       {
         std::cout << "Matched token \"" << t->name();
         std::cout << "\" (toks=" << incr << ")" << std::endl;
@@ -320,7 +342,7 @@ void Grammar::parseSource(input_stream source)
         match_any = true;
 	break;
       }
-    }
+    } // end for loop
 
     if (!match_any)
     {

@@ -42,7 +42,7 @@ void Production::print()
 }
 
 bool Production::match(std::string *token_stream,
-		       int num_tokens,                       
+		       int num_tokens,
 		       int &incr,
 		       int depth,
 		       TokenTreeNode* &match_tree)
@@ -50,10 +50,12 @@ bool Production::match(std::string *token_stream,
   if (debug)
   {
     indent_n(depth);
+    std::cout << "Production ";
     print();
-    std::cout << " match " << std::endl;
+    std::cout << " try match.." << std::endl;
   }
 
+  // TODO: Don't count empty tokens
   if (num_tokens < definition.size()) return false;
   
   // Iterate over tokens and match on each one
@@ -70,6 +72,8 @@ bool Production::match(std::string *token_stream,
                   depth + 1,
                   sub_match_tree))
     {
+      indent_n(depth);
+      std::cout << "production match failed" << std::endl;
       return false;
     }
     
@@ -83,7 +87,7 @@ bool Production::match(std::string *token_stream,
   if (debug)
   {
     indent_n(depth);
-    std::cout << "production tree being returned" << std::endl;
+    std::cout << "production match succeeded" << std::endl;
   }
   
   return true;

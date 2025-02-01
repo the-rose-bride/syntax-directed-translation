@@ -39,13 +39,34 @@ bool Terminal::match(std::string *token_stream,
   {
     indent_n(depth);
     std::cout << "Terminal " << m_definition
-              << " match on " << token_stream[0] << std::endl;
+              << " try match.. " << token_stream[0] << std::endl;
   }
-
+  
+  // Handle empty string token - don't increment tokens consumed
+  if (m_definition.size() == 0)
+  {
+    if (debug)
+    {
+      indent_n(depth);
+      printf("Empty string terminal matched!\n");
+    }
+    
+    match_tree = new TokenTreeNode(this);
+    return true;
+  }
+  
+  // Otherwise normal processing
   bool match = (token_stream[0] == m_definition);
 
   if (match)
   {
+    if (debug)
+    {
+      indent_n(depth);
+      printf("Terminal %s matched!\n",
+	     m_definition.c_str());
+    }
+    
     incr++;
     match_tree = new TokenTreeNode(this);
   }
@@ -88,7 +109,14 @@ bool NonTerminal::match(std::string *token_stream,
   {
     indent_n(depth);
     std::cout << "Nonterminal " << m_definition
-              << " match on " << token_stream[0] << std::endl;
+              << " try match on ";
+    
+    for (int i = 0; i < std::min(num_tokens, 6); ++i)
+    {
+      std::cout << token_stream[i];
+    }
+
+    std::cout << std::endl;
   }
   
   // Iterate over productions and match on them
@@ -112,7 +140,9 @@ bool NonTerminal::match(std::string *token_stream,
       
       incr += prod_incr;
 
+      std::cout << "** Print token tree" << std::endl;
       printTokenTree(*match_tree);
+      std::cout << "***" << std::endl;
 
       // NOTE: 
       // match tree already represents this nonterminal token,
